@@ -1,0 +1,454 @@
+<html>
+  <head>
+    <meta charset="utf-8">
+  
+	<title>Condición Climática del Hogar</title>
+	<link rel='shortcut icon' href='https://cdn4.iconfinder.com/data/icons/autumn-24/32/thermometer-autumn-humidity-fall-rain-temperature-measure-512.png' type='image/png'/>
+	
+	<!-- Scripts para guardar los datos en variables -->
+	<script type="text/javascript">
+	  var jsonData;
+	  
+	  function myCallback(dataWeGotViaJsonp) {
+	    jsonData = dataWeGotViaJsonp['feeds'];
+	  };
+	  
+	  var jsonData1;
+	  
+	  function myCallback1(dataWeGotViaJsonp) {
+	    jsonData1 = dataWeGotViaJsonp['feeds'];
+	  };
+
+	  var jsonData2;
+	  
+	  function myCallback2(dataWeGotViaJsonp) {
+	    jsonData2 = dataWeGotViaJsonp['feeds'];
+	  };
+	</script>
+	
+	<!-- Llamadas a los canales de ThingSpeak para conseguir los datos -->
+	<!-- Conseguir las URIs desde el canal de ThingSpeak -> Data import / Export -> Get a Channel Feed -->
+	<!-- Al cargar los datos, ejecutar las funciones anteriores con "callback=myCallback" -->
+	<script type="text/javascript" src="https://api.thingspeak.com/channels/697382/feeds.json?results=10&callback=myCallback"></script>
+	<script type="text/javascript" src="https://api.thingspeak.com/channels/697382/feeds.json?results=5&callback=myCallback1"></script>
+	<script type="text/javascript" src="https://api.thingspeak.com/channels/697383/feeds.json?results=5&callback=myCallback2"></script>
+
+	<!-- Se juntan los datos recividos en una sola variable -->
+	<script type="text/javascript">
+      for (var j = 0; j < jsonData.length; j++) {
+        var r = j/2; <!-- Ya que j aumenta de dos en dos, se crea esta variable para los index de los datos originales -->
+		  
+	    <!-- Dependiendo de cuales son los datos mas recientes, se llena la nueva matriz en un orden distinto -->
+	    if (jsonData2[r]['created_at'] > jsonData1[r]['created_at']) {
+	   	  jsonData[j]['created_at'] = jsonData1[r]['created_at'];
+          jsonData[j]['field1'] = jsonData1[r]['field1'];
+	      jsonData[j]['field2'] = jsonData1[r]['field2'];
+	      jsonData[j+1]['created_at'] = jsonData2[r]['created_at'];
+	      jsonData[j+1]['field1'] = jsonData2[r]['field1'];
+	      jsonData[j+1]['field2'] = jsonData2[r]['field2'];
+        } else {
+          jsonData[j]['created_at'] = jsonData2[r]['created_at'];
+	      jsonData[j]['field1'] = jsonData2[r]['field1'];
+	      jsonData[j]['field2'] = jsonData2[r]['field2'];
+	      jsonData[j+1]['created_at'] = jsonData1[r]['created_at'];
+	      jsonData[j+1]['field1'] = jsonData1[r]['field1'];
+	      jsonData[j+1]['field2'] = jsonData1[r]['field2'];
+	    }
+	    j = j + 1;
+	  }
+	</script>
+	
+	<!-- Llenar tabla con los datos -->
+	<script type="text/javascript">
+	  function tabla() {
+	    for (var i = 9; i >= 0; i--) {
+		  nom0 = "fecha" + (10 - i);
+		  nom1 = "hora" + (10 - i);
+		  nom2 = "temp" + (10 - i);
+		  nom3 = "hum" + (10 - i);
+		  
+		  <!-- Se le da un formato más "user friendly" a la fecha y la hora -->
+		  tiempo = jsonData[i]['created_at'];
+		  
+		  <!-- Se guardan los parámetros de la fecha en variables -->
+		  dia = tiempo.substring(6, 8);
+		  mes = tiempo.substring(4, 6);
+		  ano = tiempo.substring(0, 4);
+		  
+		  <!-- Se guardan los parámetros de la hora en variables -->
+		  hora = tiempo.substring(8, 10);
+		  minutos = tiempo.substring(10, 12);
+		  segundos = tiempo.substring(12, 14);
+		  
+		  <!-- Se adapta el formato de las variables de temperatura y humedad -->
+		  temperatura = Number(jsonData[i]['field1']);
+		  temperatura = temperatura.toFixed(0);
+		  
+		  humedad = Number(jsonData[i]['field2']);
+		  humedad = humedad.toFixed(0);
+		  
+		  document.getElementById(nom0).innerHTML = dia + "/" + mes + "/" + ano;
+		  document.getElementById(nom1).innerHTML = hora + ":" + minutos + ":" + segundos;
+		  document.getElementById(nom2).innerHTML = temperatura + " &deg;C";
+		  document.getElementById(nom3).innerHTML = humedad + " %";
+	    }	
+	  }
+	</script>
+	
+	<!-- Hacer tabla visible/invisible -->
+	<script type="text/javascript">
+	  function mostrar_tabla() {
+	  <!-- Se llena la tabla -->
+		tabla();
+		
+		document.getElementById("tabla").style.display = 'inline';
+	  }
+	  
+	  function ocultar_tabla() {
+		document.getElementById("tabla").style.display = 'none';
+	  }
+	</script>
+	
+	<!-- Se define el estilo de la tabla con css -->
+	<style>
+	  div.contenedor {
+	    position: relative;
+	    margin: auto;
+		margin-top: 20px;
+		height: 50px;
+		width: 450px;
+	  }
+	  button {
+	    width: 100%;
+		height: 100%;
+		border-radius: 8px;
+		color: white;
+		text-align: center;
+		font-size: 18px;
+		display: inline-block;
+		box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+		cursor: pointer;
+	  }
+	  button.mostrar {
+	    background-color: #008CBA;
+	  }
+	  button.mostrar:hover {
+	    background-color: #007399;
+	  }
+	  button.ocultar {
+	    background-color: #555555;
+	  }
+	  button.ocultar:hover {
+	    background-color: #333333;
+	  }
+	  table {
+        margin: auto;
+		margin-top: 10px;
+	  }
+	  tr, th {
+	    width: 150px;
+		border-style: solid;
+		border-width: 1px;
+		border-color: black;
+		font-weight: normal;
+	  }
+	  th.titulo {
+	    border-style: solid;
+		border-width: 3px;
+		border-color: black;
+		font-weight: bold;
+	  }
+	  
+	  /* Style the lines */
+      .lineBlue {
+        fill: none;
+        stroke: steelblue;
+        stroke-width: 3px;
+      }
+
+      .lineRed {
+        fill: none;
+        stroke: red;
+        stroke-width: 3px;
+      }
+
+      /* Style the axis*/
+      .axisSteelBlue text{
+        fill: steelblue;
+      }
+
+      .axisRed text{
+        fill: red;
+      }
+
+      /* Style the grids */
+      .grid line {
+        stroke: lightgrey;
+        stroke-opacity: 0.7;
+        shape-rendering: crispEdges;
+      }
+
+      .grid path {
+        stroke-width: 0;
+      }
+	</style>
+  </head>
+  
+  <body>
+    <!-- Dibujar las gráficas con los datos de temperatura y la humedad -->
+	<!-- load the d3.js library -->    	
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+	<script>
+      // set the dimensions and margins of the graph
+      var margin = {top: 50, right: 100, bottom: 150, left: 100},
+          width = window.innerWidth - margin.left - margin.right - 30,
+          height = window.innerHeight - margin.top - margin.bottom - 130;
+      
+	  // parse the date / time
+	  var parseDate = d3.timeFormat("%Y%m%d%H%M%S");
+
+      // set the ranges
+      var x = d3.scaleTime().range([0, width]);
+      var y0 = d3.scaleLinear().range([height, 0]);
+      var y1 = d3.scaleLinear().range([height, 0]);
+
+      // define the line of field1
+      var valueline = d3.line()
+	      .curve(d3.curveMonotoneX) // apply smoothing to the line
+          .x(function(d) { return x(d.created_at); }) //Date
+          .y(function(d) { return y0(d.field1); }); // Temperature
+	
+      // define the line of field2
+      var valueline2 = d3.line()
+	      .curve(d3.curveMonotoneX) // apply smoothing to the line
+          .x(function(d) { return x(d.created_at); }) //Date
+          .y(function(d) { return y1(d.field2); }); // Humidity
+      	
+      // append the svg obgect to the body of the page
+      // appends a 'group' element to 'svg'
+      // moves the 'group' element to the top left margin
+      var svg = d3.select("body").append("svg")
+          .attr("width", width + margin.left + margin.right)
+          .attr("height", height + margin.top + margin.bottom)
+          .append("g")
+          .attr("transform",
+                "translate(" + margin.left + "," + margin.top + ")");
+      
+      // gridlines in x axis function
+      function make_x_gridlines() {		
+          return d3.axisBottom(x)
+              .ticks(5)
+      }
+      
+      // gridlines in y axis function
+      function make_y_gridlines() {		
+          return d3.axisLeft(y0)
+              .ticks(5)
+      }
+      
+      function draw(data) {
+        // format the data
+        data.forEach(function(d) {
+	        // Creation date time for label
+	        d.created_at = d3.isoParse(d.created_at);
+	        d.field1 = +d.field1;
+            d.field2 = +d.field2;
+        });
+        
+        // sort creation ascending
+        data.sort(function(a, b){
+          return a["created_at"]-b["created_at"];
+        })
+      
+        // Scale the range of the data
+        x.domain(d3.extent(data, function(d) { return d.created_at; }));
+        y0.domain([d3.min(data, function(d) { return Math.min(d.field1)-1; }),
+                   d3.max(data, function(d) { return Math.max(d.field1)+1; })]);
+        y1.domain([d3.min(data, function(d) { return Math.min(d.field2)-3; }),
+                   d3.max(data, function(d) { return Math.max(d.field2)+3; })]);
+		
+		
+        // add the X gridlines
+        svg.append("g")			
+            .attr("class", "grid")
+            .attr("transform", "translate(0," + height + ")")
+            .call(make_x_gridlines()
+                .tickSize(-height)
+                .tickFormat("")
+            );
+        // add the Y gridlines
+        svg.append("g")			
+            .attr("class", "grid")
+            .call(make_y_gridlines()
+                .tickSize(-width)
+                .tickFormat("")
+            );
+      	
+        // Add the valueline path.
+        svg.append("path")
+            .data([data])
+            .attr("class", "lineRed")
+            .attr("d", valueline);
+			
+        // Add the valueline path.
+        svg.append("path")
+            .data([data])
+            .attr("class", "lineBlue")
+            .attr("d", valueline2); 
+      		
+        // Add the X Axis
+        svg.append("g")
+	        .style('font-size', '14px')
+            .attr("transform", "translate(0," + height + ")")
+            .call(d3.axisBottom(x)
+	          .tickFormat(d3.timeFormat("%Y-%m-%d %H:%M:%S")))
+	        .selectAll("text")	
+              .style("text-anchor", "end")
+              .attr("dx", "-.8em")
+              .attr("dy", ".15em")
+              .attr("transform", "rotate(-65)");
+			 
+        // Add the text label for the x axis
+        //svg.append("text")
+            //.attr("transform", "translate(" + (width / 2) + " ," + (height + (margin.bottom*3/4)) + ")")
+            //.style('font-size', '20px')
+	        //.style("text-anchor", "middle")
+            //.text("TIME");
+      	 
+        // Add the Y0 Axis (Left)
+        svg.append("g")
+	        .style('font-size', '14px')
+	        .attr("class", "axisRed")
+            .call(d3.axisLeft(y0));
+        // text label for the y0 axis
+        svg.append("text")
+            .attr("transform", "rotate(-90)")
+            .attr("y", 0 - (margin.left*3/4))
+            .attr("x",0 - (height / 2))
+            .attr("dy", "1em")
+	        .style("fill", "red")
+	        .style('font-size', '20px')
+            .style("text-anchor", "middle")
+            .text("Temperatura (ºC)"); 
+      	  
+        // Add the Y1 Axis (Right)
+        svg.append("g")
+	        .style('font-size', '14px')
+            .attr("class", "axisSteelBlue")
+	        .attr("transform", "translate( " + width + ", 0 )")
+            .call(d3.axisRight(y1));
+        // text label for the y1 axis
+        svg.append("text")
+            .attr("transform", "rotate(-90)")
+            .attr("y", width + (margin.right/2))
+            .attr("x",0 - (height / 2))
+            .attr("dy", "1em")
+	        .style("fill", "steelblue")
+	        .style('font-size', '20px')
+            .style("text-anchor", "middle")
+            .text("Humedad (%)"); 
+      
+        // Graph title
+        svg.append('text')
+            .attr('x', (width / 2))             
+            .attr('y', 0 - (margin.top / 3))
+            .attr('text-anchor', 'middle')  
+            .style('font-size', '30px') 
+            .text('CONDICIÓN CLIMÁTICA DEL HOGAR');
+        
+	  }
+      
+	  // Call de function
+      draw(jsonData);
+	  
+	  // Change the format of the date to make it suitable for the table
+	  jsonData.forEach(function(d) {
+	    d.created_at = parseDate(d.created_at);
+	  });
+  
+    </script>
+	
+    <!-- Botones para mostrar u ocultar la tabla -->
+	<div class="contenedor">
+	  <div style="position:absolute;height:100%;width:150px;left:0px;top:0px;">
+	    <button type="button" class="mostrar" onclick=mostrar_tabla()>Mostrar tabla</button>
+	  </div>
+	
+  	  <div style="position:absolute;height:100%;width:150px;right:0px;top:0px;">
+	    <button type="button" class="ocultar" onclick=ocultar_tabla()>Ocultar tabla</button>
+	  </div>
+	</div>
+	
+	<!-- Tabla con todos los datos -->
+	<div id="tabla" style="display:none;">
+	  <table>
+		<tr>
+		  <th class='titulo'>Fecha</th>
+		  <th class='titulo'>Hora</th>
+		  <th class='titulo'>Temperatura</th>
+		  <th class='titulo'>Humedad</th>
+		</tr>
+        <tr>
+		  <th><div id="fecha1"></div></th>
+		  <th><div id="hora1"></div></th>
+		  <th><div id="temp1"></div></th>
+		  <th><div id="hum1"></div></th>
+		</tr>
+		<tr>
+		  <th><div id="fecha2"></div></th>
+		  <th><div id="hora2"></div></th>
+		  <th><div id="temp2"></div></th>
+		  <th><div id="hum2"></div></th>
+		</tr>
+		<tr>
+		  <th><div id="fecha3"></div></th>
+		  <th><div id="hora3"></div></th>
+		  <th><div id="temp3"></div></th>
+		  <th><div id="hum3"></div></th>
+		</tr>
+		<tr>
+		  <th><div id="fecha4"></div></th>
+		  <th><div id="hora4"></div></th>
+		  <th><div id="temp4"></div></th>
+		  <th><div id="hum4"></div></th>
+		</tr>
+		<tr>
+		  <th><div id="fecha5"></div></th>
+		  <th><div id="hora5"></div></th>
+		  <th><div id="temp5"></div></th>
+		  <th><div id="hum5"></div></th>
+		</tr>
+		<tr>
+		  <th><div id="fecha6"></div></th>
+		  <th><div id="hora6"></div></th>
+		  <th><div id="temp6"></div></th>
+		  <th><div id="hum6"></div></th>
+		</tr>
+		<tr>
+		  <th><div id="fecha7"></div></th>
+		  <th><div id="hora7"></div></th>
+		  <th><div id="temp7"></div></th>
+		  <th><div id="hum7"></div></th>
+		</tr>
+		<tr>
+		  <th><div id="fecha8"></div></th>
+		  <th><div id="hora8"></div></th>
+		  <th><div id="temp8"></div></th>
+		  <th><div id="hum8"></div></th>
+		</tr>
+		<tr>
+		  <th><div id="fecha9"></div></th>
+		  <th><div id="hora9"></div></th>
+		  <th><div id="temp9"></div></th>
+		  <th><div id="hum9"></div></th>
+		</tr>
+		<tr>
+		  <th><div id="fecha10"></div></th>
+		  <th><div id="hora10"></div></th>
+		  <th><div id="temp10"></div></th>
+		  <th><div id="hum10"></div></th>
+		</tr>
+	  </table>
+	</div>
+  </body>
+</html>
